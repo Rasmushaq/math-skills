@@ -1,7 +1,11 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 IMAGE="stat-bin"
-VALID_BIN=$(ls -xm ./bin | sed 's:, :|:')
+VALID_BIN=$(ls ./stat-bin/bin | tr '\n' '|')
+
+run_rust(){
+	cargo run linear-stats
+}
 
 help() {
 	cat <<EOF

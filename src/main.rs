@@ -2,6 +2,12 @@ use std::env;
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
+use num_traits::float::Float;
+
+// Round a floating-point number to the nearest integer
+fn round_to_nearest<T: Float>(value: T) -> i64 {
+    value.round().to_i64().unwrap_or_else(|| value.to_f64().unwrap_or(0.0) as i64)
+}
 
 fn main() {
     // Get the file path from the command-line arguments
@@ -22,29 +28,25 @@ fn main() {
     };
 
     // Read values from the file
-    let values: Vec<i32> = io::BufReader::new(file)
+    let values: Vec<i64> = io::BufReader::new(file)
         .lines()
         .filter_map(|line| line.ok().and_then(|s| s.parse().ok()))
         .collect();
 
     // Calculate statistics
-    let average: i32 = values.iter().sum::<i32>() / values.len() as i32;
+    let average: f64 = values.iter().sum::<i64>() as f64 / values.len() as f64;
+    let variance = values
+        .iter()
+        .map(|&x| (x as f64 - average).powi(2))
+        .sum::<f64>()
+        / values.len() as f64;
+    let std_deviation = round_to_nearest(variance.sqrt());
+
+    // Print the results as integers
+    println!("Average: {}", round_to_nearest(average));
     let mut sorted_values = values.clone();
     sorted_values.sort();
-
-    let median = if values.len() % 2 == 0 {
-        let mid = values.len() / 2;
-        (sorted_values[mid - 1] + sorted_values[mid]) / 2
-    } else {
-        sorted_values[values.len() / 2]
-    };
-
-    let variance = values.iter().map(|x| (x - average).pow(2)).sum::<i32>() / values.len() as i32;
-    let std_deviation = (variance as f64).sqrt() as i32;
-
-    // Print the results
-    println!("Average: {}", average);
-    println!("Median: {}", median);
-    println!("Variance: {}", variance);
+    println!("Median: {}", sorted_values[values.len() / 2]);
+    println!("Variance: {}", round_to_nearest(variance));
     println!("Standard Deviation: {}", std_deviation);
 }
